@@ -112,6 +112,41 @@ a:hover {
     text-decoration: underline;
 }
 
+.charts-section {
+    margin-top: 30px;
+}
+
+.charts-title {
+    font-size: 18px;
+    color: #1a4c6e;
+    margin-bottom: 16px;
+    font-weight: bold;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.chart-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.chart-card--wide {
+    grid-column: 1 / -1;
+}
+
+.chart-label {
+    font-size: 14px;
+    color: #1a4c6e;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
 @media (max-width: 700px) {
     body {
         padding: 10px;
@@ -122,5 +157,11 @@ a:hover {
     th, td {
         font-size: 12px;
         padding: 8px 5px;
+    }
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-card--wide {
+        grid-column: auto;
     }
 }

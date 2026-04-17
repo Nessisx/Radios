@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Radio Colombia - Emisoras</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -34,6 +35,24 @@
                 </tbody>
             </table>
         </div>
+        <section class="charts-section">
+            <h2 class="charts-title">Visualizaciones</h2>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3 class="chart-label">Emisoras por Banda</h3>
+                    <div id="chartBar"></div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-label">Proporción por Banda</h3>
+                    <div id="chartPie"></div>
+                </div>
+                <div class="chart-card chart-card--wide">
+                    <h3 class="chart-label">Distribución de Frecuencias por Banda</h3>
+                    <div id="chartHistogram"></div>
+                </div>
+            </div>
+        </section>
+
         <div class="footer-note">
             Realizado con ❤️ por Nelson Sierra
         </div>
@@ -101,6 +120,70 @@
         });
     }
 
+    function renderCharts(radios) {
+        const bandCounts = {};
+        const freqByBand = {};
+
+        for (const radio of radios) {
+            const band = radio.band || 'Desconocida';
+            bandCounts[band] = (bandCounts[band] || 0) + 1;
+            if (radio.frequency > 0) {
+                if (!freqByBand[band]) freqByBand[band] = [];
+                freqByBand[band].push(radio.frequency);
+            }
+        }
+
+        const bands = Object.keys(bandCounts);
+        const counts = bands.map(b => bandCounts[b]);
+        const bandColors = { AM: '#1a4c6e', FM: '#ffb347' };
+        const colors = bands.map(b => bandColors[b] || '#6c757d');
+
+        const chartConfig = { responsive: true, displayModeBar: false };
+        const chartLayout = {
+            margin: { t: 10, b: 50, l: 50, r: 10 },
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            font: { family: 'Arial, Helvetica, sans-serif', size: 13 }
+        };
+
+        // Bar chart
+        Plotly.newPlot('chartBar', [{
+            type: 'bar',
+            x: bands,
+            y: counts,
+            marker: { color: colors },
+            hovertemplate: '%{x}: %{y} emisoras<extra></extra>'
+        }], { ...chartLayout, xaxis: { title: 'Banda' }, yaxis: { title: 'Cantidad de emisoras' } }, chartConfig);
+
+        // Pie chart
+        Plotly.newPlot('chartPie', [{
+            type: 'pie',
+            labels: bands,
+            values: counts,
+            marker: { colors: colors },
+            hovertemplate: '%{label}: %{value} emisoras (%{percent})<extra></extra>',
+            textinfo: 'label+percent'
+        }], { ...chartLayout, margin: { t: 10, b: 10, l: 10, r: 10 } }, chartConfig);
+
+        // Histogram
+        const histTraces = Object.keys(freqByBand).map(band => ({
+            type: 'histogram',
+            name: band,
+            x: freqByBand[band],
+            opacity: 0.75,
+            marker: { color: bandColors[band] || '#6c757d' },
+            hovertemplate: 'Frecuencia: %{x}<br>Cantidad: %{y}<extra>' + band + '</extra>'
+        }));
+
+        Plotly.newPlot('chartHistogram', histTraces, {
+            ...chartLayout,
+            barmode: 'overlay',
+            xaxis: { title: 'Frecuencia' },
+            yaxis: { title: 'Cantidad de emisoras' },
+            legend: { orientation: 'h', y: -0.2 }
+        }, chartConfig);
+    }
+
     async function init() {
         statsInfo.innerText = "Descargando emisoras desde API-Colombia...";
         allRadios = await fetchRadios();
@@ -112,6 +195,7 @@
         }
         
         updateStatsAndTable(allRadios);
+        renderCharts(allRadios);
     }
 
     document.addEventListener('DOMContentLoaded', init);
